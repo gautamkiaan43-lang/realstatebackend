@@ -6,7 +6,7 @@ dotenv.config();
 const app = express();
 
 const corsOptions = {
-    origin: ['https://ero-1.netlify.app', 'http://localhost:5173', 'http://localhost:3000'],
+    origin: ['https://ero-1.netlify.app', 'http://localhost:5173', 'http://localhost:3000','https://realstateproje.netlify.app'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     credentials: true,
