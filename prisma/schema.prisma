@@ -1,0 +1,395 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model commission {
+  id          Int       @id @default(autoincrement())
+  deal_id     Int       @unique
+  agent_id    Int
+  amount      Decimal   @db.Decimal(10, 2)
+  status      String    @default("PENDING")
+  protocol_id String?   @unique(map: "Commission_protocol_id_key")
+  percentage  Decimal   @default(0.00) @db.Decimal(5, 2)
+  paid_at     DateTime?
+  createdAt   DateTime  @default(now())
+  agent       user      @relation(fields: [agent_id], references: [id], map: "Commission_agent_id_fkey")
+  deal        deal      @relation(fields: [deal_id], references: [id], map: "Commission_deal_id_fkey")
+
+  @@index([agent_id], map: "Commission_agent_id_idx")
+  @@index([deal_id], map: "Commission_deal_id_idx")
+}
+
+model contact {
+  id                   Int            @id @default(autoincrement())
+  name                 String
+  email                String
+  phone                String?
+  source               String?
+  message              String?
+  role                 contact_role   @default(BUYER)
+  team_id              Int?
+  created_from_lead_id Int?
+  assigned_to          Int
+  status               contact_status @default(ACTIVE)
+  tags                 String?        @db.LongText
+  notes                String?        @db.LongText
+  documents            String?        @db.LongText
+  buyerDetails         String?        @db.LongText
+  sellerDetails        String?        @db.LongText
+  leadDetails          String?        @db.LongText
+  companyDetails       String?        @db.LongText
+  isDeleted            Boolean        @default(false)
+  deletedAt            DateTime?
+  deletedBy            Int?
+  lead_id              Int?
+  is_internal          Boolean        @default(false)
+  created_by           Int?
+  agent_id             Int?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  assignedTo           user           @relation("ContactAssignedTo", fields: [assigned_to], references: [id], map: "Contact_assigned_to_fkey")
+  createdBy            user?          @relation("ContactCreatedBy", fields: [created_by], references: [id], map: "Contact_created_by_fkey")
+  mappedAgent          user?          @relation("ContactMappedAgent", fields: [agent_id], references: [id], map: "Contact_agent_id_fkey")
+  fromLead             lead?          @relation("LeadConversion", fields: [created_from_lead_id], references: [id], map: "Contact_created_from_lead_id_fkey")
+  leadReference        lead?          @relation("LeadReference", fields: [lead_id], references: [id], map: "Contact_lead_id_fkey")
+  buyer_deals          deal[]         @relation("MatchedBuyer")
+  deals                deal[]         @relation("PrimaryClient")
+  properties           property[]
+
+  @@index([role])
+  @@index([status])
+  @@index([is_internal])
+  @@index([lead_id])
+  @@index([assigned_to], map: "Contact_assigned_to_idx")
+  @@index([created_from_lead_id], map: "Contact_created_from_lead_id_idx")
+  @@index([created_by], map: "Contact_created_by_fkey")
+}
+
+model deal {
+  id                Int         @id @default(autoincrement())
+  contact_id        Int
+  title             String?     @default("Property Acquisition")
+  stage             String?     @default("INITIATED")
+  priority          String?     @default("Medium")
+  notes             String?     @db.LongText
+  history           String?     @db.LongText
+  documents         String?     @db.LongText
+  value             Decimal?    @db.Decimal(10, 2)
+  isDeleted         Boolean     @default(false)
+  deletedAt         DateTime?
+  deletedBy         Int?
+  status            deal_status @default(DRAFT)
+  property_id       Int?
+  assigned_to       Int
+  createdAt         DateTime    @default(now())
+  commissionRate    Float?
+  lostReason        String?     @db.LongText
+  source            String?     @default("MANUAL")
+  is_legacy_invalid Boolean     @default(false)
+  lead_id           Int?
+  buyer_contact_id  Int?
+  is_legacy         Boolean     @default(false)
+  visitDate         DateTime?
+  visitTime         String?
+  type              deal_type   @default(BUYER)
+  agent_id          Int?
+  submitted_at      DateTime?
+  approved_at       DateTime?
+  approved_by       Int?
+  rejection_reason  String?     @db.LongText
+  commissions       commission?
+  assignedTo        user        @relation(fields: [assigned_to], references: [id], map: "Deal_assigned_to_fkey")
+  agent             user?       @relation("DealAgentOwnership", fields: [agent_id], references: [id], map: "Deal_agent_id_fkey")
+  approver          user?       @relation("DealApprover", fields: [approved_by], references: [id], map: "Deal_approved_by_fkey")
+  buyer             contact?    @relation("MatchedBuyer", fields: [buyer_contact_id], references: [id], map: "Deal_buyer_contact_id_fkey")
+  contact           contact     @relation("PrimaryClient", fields: [contact_id], references: [id], map: "Deal_contact_id_fkey")
+  property          property?   @relation(fields: [property_id], references: [id], map: "Deal_property_id_fkey")
+
+  @@index([assigned_to], map: "Deal_assigned_to_idx")
+  @@index([contact_id], map: "Deal_contact_id_idx")
+  @@index([property_id], map: "Deal_property_id_idx")
+  @@index([buyer_contact_id], map: "Deal_buyer_contact_id_idx")
+  @@index([type])
+}
+
+model lead {
+  id                      Int                 @id @default(autoincrement())
+  name                    String
+  email                   String
+  phone                   String?
+  source                  String?
+  message                 String?
+  status                  lead_status         @default(NEW)
+  location_interest       String?
+  isDeleted               Boolean             @default(false)
+  deletedAt               DateTime?
+  deletedBy               Int?
+  owner_id                Int?
+  manager_id              Int?
+  created_by_id           Int
+  property_id             Int?
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+  converted_to_contact_id Int?
+  is_converted            Boolean             @default(false)
+  currency                String              @default("EUR")
+  purpose                 String?
+  budget                  Decimal?            @db.Decimal(12, 2)
+  budgetMax               Decimal?            @db.Decimal(12, 2)
+  budgetMin               Decimal?            @db.Decimal(12, 2)
+  emails                  String?             @db.LongText
+  inquiry_type            String?             @default("buyer")
+  leadSource              String              @default("Manual Entry")
+  locationPreference      String?
+  phones                  String?             @db.LongText
+  propertyType            String?
+  property_type_interest  String?
+  convertedContacts       contact[]           @relation("LeadConversion")
+  referencedContacts      contact[]           @relation("LeadReference")
+  createdBy               user                @relation("lead_created_by_idTouser", fields: [created_by_id], references: [id], map: "Lead_created_by_id_fkey")
+  manager                 user?               @relation("lead_manager_idTouser", fields: [manager_id], references: [id], map: "Lead_manager_id_fkey")
+  owner                   user?               @relation("lead_owner_idTouser", fields: [owner_id], references: [id], map: "Lead_owner_id_fkey")
+  property                property?           @relation(fields: [property_id], references: [id], map: "Lead_property_id_fkey")
+  activities              leadactivity[]
+  leadassignmentlog       leadassignmentlog[]
+
+  @@index([created_by_id], map: "Lead_created_by_id_idx")
+  @@index([manager_id], map: "Lead_manager_id_idx")
+  @@index([owner_id], map: "Lead_owner_id_idx")
+  @@index([property_id], map: "Lead_property_id_idx")
+}
+
+model leadactivity {
+  id        Int      @id @default(autoincrement())
+  lead_id   Int
+  user_id   Int
+  type      String
+  details   String?  @db.LongText
+  createdAt DateTime @default(now())
+  lead      lead     @relation(fields: [lead_id], references: [id], onDelete: Cascade, map: "LeadActivity_lead_id_fkey")
+  user      user     @relation(fields: [user_id], references: [id], map: "LeadActivity_user_id_fkey")
+
+  @@index([lead_id], map: "LeadActivity_lead_id_idx")
+  @@index([user_id], map: "LeadActivity_user_id_idx")
+}
+
+model notification {
+  id        Int      @id @default(autoincrement())
+  user_id   Int
+  type      String
+  message   String   @db.Text
+  is_read   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      user     @relation(fields: [user_id], references: [id], map: "Notification_user_id_fkey")
+
+  @@index([user_id], map: "Notification_user_id_idx")
+}
+
+model property {
+  id              Int             @id @default(autoincrement())
+  title           String
+  slug            String          @unique(map: "Property_slug_key")
+  price           Decimal         @db.Decimal(12, 2)
+  description     String?         @db.Text
+  type            String          @default("Villa")
+  status          PropertyStatus  @default(AVAILABLE)
+  address         String?
+  city            String?
+  country         String?         @default("Italy")
+  lat             Float?
+  lng             Float?
+  bedrooms        Int?
+  bathrooms       Int?
+  area            Float?
+  year_built      Int?
+  energy_rating   String?
+  features        String?         @db.LongText
+  media           String?         @db.LongText
+  documents       String?         @db.LongText
+  publishing      String?         @db.LongText
+  is_archived     Boolean         @default(false)
+  owner_id        Int?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  userId          Int?
+  commissionType  CommissionType  @default(PERCENTAGE)
+  commissionValue Decimal         @default(3.00) @db.Decimal(12, 2)
+  deals           deal[]
+  leads           lead[]
+  owner           contact?        @relation(fields: [owner_id], references: [id], map: "Property_owner_id_fkey")
+  user            user?           @relation(fields: [userId], references: [id], map: "Property_userId_fkey")
+  publishingLogs  PublishingLog[]
+  syncErrors      SyncError[]
+
+  @@index([owner_id], map: "Property_owner_id_idx")
+  @@index([userId], map: "Property_userId_fkey")
+}
+
+model PublishingLog {
+  id         Int       @id @default(autoincrement())
+  propertyId Int?
+  siteKey    String
+  action     String
+  status     String
+  message    String?   @db.Text
+  timestamp  DateTime  @default(now())
+  property   property? @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId], map: "PublishingLog_propertyId_idx")
+  @@index([siteKey], map: "PublishingLog_siteKey_idx")
+  @@map("publishinglog")
+}
+
+model SyncError {
+  id         Int       @id @default(autoincrement())
+  propertyId Int?
+  siteKey    String
+  siteName   String?
+  errorCode  String?
+  message    String    @db.Text
+  retryCount Int       @default(0)
+  isResolved Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  property   property? @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId], map: "SyncError_propertyId_idx")
+  @@index([siteKey], map: "SyncError_siteKey_idx")
+  @@map("syncerror")
+}
+
+model user {
+  id                   Int            @id @default(autoincrement())
+  name                 String
+  email                String         @unique(map: "User_email_key")
+  password             String
+  role                 user_role      @default(AGENT)
+  status               String         @default("active")
+  commission_rate      Decimal        @default(0.00) @db.Decimal(5, 2)
+  language             String         @default("en")
+  notificationSettings String?        @db.LongText
+  manager_id           Int?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  auditlog             auditlog[]
+  commission           commission[]
+  assignedContacts     contact[]      @relation("ContactAssignedTo")
+  createdContacts      contact[]      @relation("ContactCreatedBy")
+  deals                deal[]
+  createdLeads         lead[]         @relation("lead_created_by_idTouser")
+  managedLeads         lead[]         @relation("lead_manager_idTouser")
+  ownedLeads           lead[]         @relation("lead_owner_idTouser")
+  leadactivity         leadactivity[]
+  notification         notification[]
+  properties           property[]
+  ownedDeals           deal[]         @relation("DealAgentOwnership")
+  approvedDeals        deal[]         @relation("DealApprover")
+  mappedContacts       contact[]      @relation("ContactMappedAgent")
+  manager              user?          @relation("userTouser", fields: [manager_id], references: [id], map: "User_manager_id_fkey")
+  subordinates         user[]         @relation("userTouser")
+
+  @@index([manager_id], map: "User_manager_id_idx")
+}
+
+model WebsiteConfig {
+  id          Int       @id @default(autoincrement())
+  name        String
+  domain      String
+  apiEndpoint String?
+  status      String    @default("disconnected")
+  lastSync    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("websiteconfig")
+}
+
+model auditlog {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  action     String
+  entityType String
+  entityId   Int
+  oldValue   String?  @db.LongText
+  newValue   String?  @db.LongText
+  timestamp  DateTime @default(now())
+  user       user     @relation(fields: [user_id], references: [id], map: "AuditLog_user_id_fkey")
+
+  @@index([user_id], map: "AuditLog_user_id_idx")
+}
+
+model leadassignmentlog {
+  id              Int      @id @default(autoincrement())
+  lead_id         Int
+  assigned_to     Int
+  assigned_by     Int
+  assigned_at     DateTime @default(now())
+  assignment_type String
+  reason          String?
+  lead            lead     @relation(fields: [lead_id], references: [id])
+
+  @@index([lead_id])
+}
+
+enum user_role {
+  SUPER_ADMIN
+  MANAGER
+  AGENT
+}
+
+enum deal_status {
+  DRAFT
+  NEW
+  OPEN
+  IN_PROGRESS
+  COMPLETED_BY_AGENT
+  PENDING_APPROVAL
+  APPROVED
+  WON
+  REJECTED
+  LOST
+}
+
+enum deal_type {
+  BUYER
+  SELLER
+}
+
+enum contact_status {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+  BLACKLISTED
+}
+
+enum PropertyStatus {
+  AVAILABLE
+  RESERVED
+  SOLD
+  OFF_MARKET
+}
+
+enum CommissionType {
+  PERCENTAGE
+  FIXED
+}
+
+enum lead_status {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERSION_REQUESTED
+  REQUESTED_LOST
+  CONVERTED
+  LOST
+}
+
+enum contact_role {
+  BUYER
+  SELLER
+}

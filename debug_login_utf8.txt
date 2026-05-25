@@ -1,0 +1,41 @@
+﻿curl.exe :   % Total    % Received % 
+Xferd  Average Speed  Time    Time    
+Time   Current
+At line:1 char:1
++ curl.exe -X POST 
+http://localhost:5000/api/auth/login 
+-H "Content-Typ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpeci 
+   fied: (  % Total    % ... Time   C  
+  urrent:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCo 
+   mmandError
+ 
+                                 Dload 
+ Upload  Total   Spent   Left   Speed
+
+  0      0   0      0   0      0      
+0      0                              0
+100   1070 100   1068 100      2 
+157.2k    301                          
+    0
+100   1070 100   1068 100      2 
+148.2k    284                          
+    0
+100   1070 100   1068 100      2 
+143.2k    274                          
+    0
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>SyntaxError: Expected property name or &#39;}&#39; in JSON at position 1 (line 1 column 2)<br> &nbsp; &nbsp;at JSON.parse (&lt;anonymous&gt;)<br> &nbsp; &nbsp;at parse (D:\Kiaan\ERPF (2)\backend\node_modules\body-parser\lib\types\json.js:72:19)<br> &nbsp; &nbsp;at D:\Kiaan\ERPF (2)\backend\node_modules\body-parser\lib\read.js:162:18<br> &nbsp; &nbsp;at AsyncResource.runInAsyncScope (node:async_hooks:211:14)<br> &nbsp; &nbsp;at invokeCallback (D:\Kiaan\ERPF (2)\backend\node_modules\raw-body\index.js:238:16)<br> &nbsp; &nbsp;at done (D:\Kiaan\ERPF (2)\backend\node_modules\raw-body\index.js:227:7)<br> &nbsp; &nbsp;at IncomingMessage.onEnd (D:\Kiaan\ERPF (2)\backend\node_modules\raw-body\index.js:287:7)<br> &nbsp; &nbsp;at IncomingMessage.emit (node:events:524:28)<br> &nbsp; &nbsp;at endReadableNT (node:internal/streams/readable:1698:12)<br> &nbsp; &nbsp;at process.processTicksAndRejections (node:internal/process/task_queues:90:21)</pre>
+</body>
+</html>
+curl: (3) URL rejected: Malformed 
+input to a URL function
